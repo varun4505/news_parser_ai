@@ -350,8 +350,7 @@ def get_news(query):
                 except Exception as e:
                     print(f"Error processing detailed article info: {e}")
                     traceback.print_exc()
-            
-            # Extract journalist name if possible and not already set from newspaper3k
+              # Extract journalist name if possible and not already set from newspaper3k
             if article_data['journalist'] == "Not specified":
                 # Try to extract from title first, then from content if available
                 full_text = article_data.get('full_text', '')
@@ -360,7 +359,8 @@ def get_news(query):
                     article_data['journalist'] = journalist
             
             articles.append(article_data)
-          if not articles:
+        
+        if not articles:
             return jsonify({
                 "error": "No articles found",
                 "message": "Please try with a different search term.",
