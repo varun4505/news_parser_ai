@@ -6,7 +6,8 @@
       "use": "@vercel/python",
       "config": {
         "maxLambdaSize": "15mb",
-        "buildCommand": "chmod +x build.sh && ./build.sh"
+        "buildCommand": "chmod +x build.sh && ./build.sh",
+        "includeFiles": ["*.py", "api/**"]
       }
     }
   ],
