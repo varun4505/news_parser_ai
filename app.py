@@ -29,7 +29,7 @@ limiter = Limiter(
 # Configure CORS with specific settings
 CORS(app, resources={
     r"/*": {
-        "origins": ["http://localhost:3000", "https://*.vercel.app", "https://4sb736zc-3000.inc1.devtunnels.ms"],  # Local and Vercel domains
+        "origins": ["http://localhost:3000", "https://*.vercel.app"],  # Local and Vercel domains
         "methods": ["GET", "POST", "OPTIONS"],
         "allow_headers": ["Content-Type", "Authorization"]
     }
@@ -350,9 +350,9 @@ def get_news(query):
                 except Exception as e:
                     print(f"Error processing detailed article info: {e}")
                     traceback.print_exc()
-              # Extract journalist name if possible and not already set from newspaper3k
-            if article_data['journalist'] == "Not specified":
-                # Try to extract from title first, then from content if available
+            
+            # Extract journalist name if possible and not already set from newspaper3k
+            if article_data['journalist'] == "Not specified":                # Try to extract from title first, then from content if available
                 full_text = article_data.get('full_text', '')
                 journalist = extract_journalist(title, full_text)
                 if journalist:
