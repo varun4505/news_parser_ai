@@ -3,7 +3,11 @@
   "builds": [
     {
       "src": "api/index.py",
-      "use": "@vercel/python"
+      "use": "@vercel/python",
+      "config": {
+        "maxLambdaSize": "15mb",
+        "buildCommand": "chmod +x build.sh && ./build.sh"
+      }
     }
   ],
   "routes": [
@@ -13,6 +17,7 @@
     }
   ],
   "env": {
-    "PYTHONUNBUFFERED": "1"
+    "PYTHONUNBUFFERED": "1",
+    "NLTK_DATA": "/tmp/nltk_data"
   }
 }

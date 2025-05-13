@@ -5,4 +5,5 @@ newspaper3k==0.2.8
 python-dotenv~=0.19.0
 gunicorn==21.2.0
 flask-limiter==3.5.0
-lxml[html_clean]
+lxml==5.4.0
+lxml_html_clean==0.1.3
