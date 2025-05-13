@@ -35,8 +35,8 @@ CORS(app, resources={
     }
 })
 
-# Enable debugging for development
-app.config['DEBUG'] = True
+# Set debug mode based on environment
+app.config['DEBUG'] = os.environ.get('FLASK_ENV') == 'development'
 
 # Simple in-memory cache for news results
 news_cache = {}
