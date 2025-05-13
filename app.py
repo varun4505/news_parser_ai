@@ -29,14 +29,19 @@ limiter = Limiter(
 # Configure CORS with specific settings
 CORS(app, resources={
     r"/*": {
-        "origins": ["http://localhost:3000", "https://*.vercel.app"],  # Local and Vercel domains
+        "origins": [
+            "http://localhost:3000", 
+            "https://news-parser-frontend.vercel.app",
+            "https://news-parser-ai.vercel.app",
+            "https://*.vercel.app"  # Wildcard for other Vercel domains
+        ],
         "methods": ["GET", "POST", "OPTIONS"],
         "allow_headers": ["Content-Type", "Authorization"]
     }
 })
 
-# Set debug mode based on environment
-app.config['DEBUG'] = os.environ.get('FLASK_ENV') == 'development'
+# Enable debugging for development
+app.config['DEBUG'] = True
 
 # Simple in-memory cache for news results
 news_cache = {}
