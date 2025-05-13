@@ -1,0 +1,7 @@
+flask==2.3.3
+flask-cors==4.0.0
+gnews==0.3.6
+newspaper3k==0.2.8
+python-dotenv==1.0.0
+gunicorn==21.2.0
+flask-limiter==3.5.0
