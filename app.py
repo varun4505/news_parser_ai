@@ -11,21 +11,11 @@ from datetime import datetime
 import time
 import traceback
 from functools import lru_cache  # Import LRU Cache for caching results
-from flask_limiter import Limiter
-from flask_limiter.util import get_remote_address
 
 # Load environment variables
 load_dotenv()
 
 app = Flask(__name__)
-
-# Initialize rate limiter
-limiter = Limiter(
-    get_remote_address,
-    app=app,
-    default_limits=["100 per day", "30 per hour"],
-    storage_uri="memory://",
-)
 # Configure CORS with specific settings
 CORS(app, resources={
     r"/*": {
@@ -204,13 +194,11 @@ def fetch_article_details(url):
         }
 
 @app.route('/news/<query>')
-@limiter.limit("5 per minute")  # More restrictive rate limit for the resource-intensive endpoint
 def get_news(query):
-    try:
-        # Get number of articles from query parameters (default to 30)
+    try:        # Get number of articles from query parameters (default to 30)
         max_articles = request.args.get('articles', default=30, type=int)
         # Limit to reasonable range
-        max_articles = min(max(1, max_articles), 30)  # Between 1 and 30 articles
+        max_articles = min(max(1, max_articles), 100)  # Between 1 and 100 articles
         
         # Get if detailed mode is enabled (uses newspaper3k to fetch full article content)
         detailed_mode = request.args.get('detailed', default=True, type=lambda v: v.lower() == 'true')
@@ -399,7 +387,7 @@ def index():
                 "path": "/news/<query>", 
                 "method": "GET", 
                 "description": "Get news articles based on search query",                "parameters": {
-                    "articles": "Optional: Number of articles to fetch (default: 30, max: 30)",
+                    "articles": "Optional: Number of articles to fetch (default: 30, max: 100)",
                     "language": "Optional: Language code (default: 'en')",
                     "country": "Optional: Country code (default: 'IN')",
                     "period": "Optional: Time period for news (default: '1d')"
