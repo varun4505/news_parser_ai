@@ -9,3 +9,4 @@ lxml==5.4.0
 lxml_html_clean==0.4.2
 requests==2.31.0
 feedparser
+googlenewsdecoder

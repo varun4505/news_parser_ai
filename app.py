@@ -14,6 +14,7 @@ from functools import lru_cache  # Import LRU Cache for caching results
 import urllib.parse
 import requests
 import feedparser  # Add feedparser for RSS support
+import googlenewsdecoder  # Add googlenewsdecoder for decoding Google News links
 
 # Load environment variables
 load_dotenv()
@@ -330,6 +331,15 @@ def get_news(query):
             original_link = extract_original_url(google_news_link)
             print(f"Original URL: {original_link}")
             
+            # Try to decode Google News link using googlenewsdecoder
+            try:
+                decoded_url = googlenewsdecoder.decode_url(google_news_link)
+                if decoded_url and decoded_url != original_link:
+                    print(f"Decoded original URL using googlenewsdecoder: {decoded_url}")
+                    original_link = decoded_url
+            except Exception as e:
+                print(f"googlenewsdecoder failed: {e}")
+            
             # Extract publication from publisher info
             publisher_info = item.get('publisher', {})
             publication = publisher_info.get('title', 'Unknown Source')
@@ -414,18 +424,29 @@ def get_news(query):
         feed = feedparser.parse(rss_url)
         if feed.entries:
             for entry in feed.entries:
-                # Avoid duplicates by checking if the title already exists
-                if not any(a['title'] == entry.title for a in articles):
-                    article_data = {
-                        'title': entry.title,
-                        'description': entry.summary if hasattr(entry, 'summary') else '',
-                        'date': entry.published if hasattr(entry, 'published') else 'Unknown',
-                        'link': entry.link,
-                        'google_news_link': entry.link,
-                        'publication': entry.get('source', {}).get('title', 'Unknown Source') if hasattr(entry, 'source') else 'Unknown Source',
-                        'journalist': 'Not specified',
-                    }
-                    articles.append(article_data)
+                # Do NOT filter out duplicates; include all coverages
+                original_link = entry.link
+                try:
+                    decoded_url = googlenewsdecoder.decode_url(entry.link)
+                    if decoded_url and decoded_url != original_link:
+                        print(f"Decoded RSS original URL using googlenewsdecoder: {decoded_url}")
+                        original_link = decoded_url
+                except Exception as e:
+                    print(f"googlenewsdecoder failed for RSS: {e}")
+                # Fetch full article details using newspaper3k
+                article_details = fetch_article_details(original_link)
+                article_data = {
+                    'title': entry.title,
+                    'description': article_details['text'] if article_details['text'] else (entry.summary if hasattr(entry, 'summary') else ''),
+                    'date': entry.published if hasattr(entry, 'published') else 'Unknown',
+                    'link': original_link,
+                    'google_news_link': entry.link,
+                    'publication': entry.get('source', {}).get('title', 'Unknown Source') if hasattr(entry, 'source') else 'Unknown Source',
+                    'journalist': ', '.join(article_details['authors']) if article_details['authors'] else 'Not specified',
+                    'image_url': article_details['top_image'] if article_details['top_image'] else '',
+                    'keywords': article_details['keywords'][:10] if article_details['keywords'] else []
+                }
+                articles.append(article_data)
 
         if not articles:
             return jsonify({
