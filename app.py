@@ -11,6 +11,8 @@ from datetime import datetime
 import time
 import traceback
 from functools import lru_cache  # Import LRU Cache for caching results
+import urllib.parse
+import requests
 
 # Load environment variables
 load_dotenv()
@@ -47,6 +49,53 @@ def cleanup_cache():
     
     for key in keys_to_remove:
         del news_cache[key]
+
+def extract_original_url(google_news_url):
+    """Extract the original source URL from a Google News URL"""
+    if not google_news_url or not google_news_url.startswith('https://news.google.com'):
+        return google_news_url
+    
+    try:
+        # Method 1: Check if URL contains 'url=' parameter
+        parsed_url = urllib.parse.urlparse(google_news_url)
+        query_params = urllib.parse.parse_qs(parsed_url.query)
+        
+        if 'url' in query_params:
+            original_url = query_params['url'][0]
+            if original_url.startswith('http'):
+                return original_url
+        
+        # Method 2: Follow redirects to get the final URL
+        try:
+            response = requests.head(google_news_url, allow_redirects=True, timeout=10)
+            if response.url and response.url != google_news_url:
+                return response.url
+        except Exception as e:
+            print(f"Error following redirects for {google_news_url}: {e}")
+        
+        # Method 3: Extract from the path if it contains encoded URL
+        if '/articles/' in google_news_url:
+            # Sometimes the original URL is base64 encoded in the path
+            try:
+                import base64
+                path_parts = google_news_url.split('/articles/')
+                if len(path_parts) > 1:
+                    encoded_part = path_parts[1].split('?')[0]
+                    # Try to decode if it looks like base64
+                    try:
+                        decoded = base64.b64decode(encoded_part + '==').decode('utf-8')
+                        if decoded.startswith('http'):
+                            return decoded
+                    except:
+                        pass
+            except Exception as e:
+                print(f"Error extracting from path: {e}")
+        
+        return google_news_url  # Return original if extraction fails
+        
+    except Exception as e:
+        print(f"Error extracting original URL: {e}")
+        return google_news_url
 
 def extract_journalist(title, content=None):
     """Attempt to extract journalist name if it exists in the title or content"""
@@ -254,8 +303,7 @@ def get_news(query):
         # Print summary of results
         print(f"\nTotal articles found: {len(news_results)}")
         print("===================================")
-        
-        # Print sample of first article
+          # Print sample of first article
         if news_results:
             first = news_results[0]
             print("Sample article:")
@@ -272,15 +320,19 @@ def get_news(query):
             # Extract basic data from GNews
             title = item.get('title', 'No title')
             description = item.get('description', 'No description available')
-            link = item.get('url', '#')
+            google_news_link = item.get('url', '#')
             
             print(f"\nProcessing article: {title}")
+            print(f"Google News URL: {google_news_link}")
+            
+            # Extract the original source URL
+            original_link = extract_original_url(google_news_link)
+            print(f"Original URL: {original_link}")
             
             # Extract publication from publisher info
             publisher_info = item.get('publisher', {})
             publication = publisher_info.get('title', 'Unknown Source')
-            
-            # Parse date if available
+              # Parse date if available
             date_str = item.get('published date', '')
             if date_str:
                 try:
@@ -295,16 +347,18 @@ def get_news(query):
                 'title': title,
                 'description': description,
                 'date': date,
-                'link': link,
+                'link': original_link,  # Use the original source URL
+                'google_news_link': google_news_link,  # Keep Google News link as reference
                 'publication': publication,
                 'journalist': "Not specified"  # Will update if we fetch detailed info
             }
-              # If detailed mode is enabled, fetch additional info using newspaper3k
-            if detailed_mode and link and link != '#':
+            
+            # If detailed mode is enabled, fetch additional info using newspaper3k
+            if detailed_mode and original_link and original_link != '#':
                 try:
-                    print(f"Fetching detailed information for: {link}")
+                    print(f"Fetching detailed information for: {original_link}")
                     start_time = time.time()
-                    article_details = fetch_article_details(link)
+                    article_details = fetch_article_details(original_link)
                     elapsed_time = time.time() - start_time
                     print(f"Article details fetched in {elapsed_time:.2f} seconds")
                     
