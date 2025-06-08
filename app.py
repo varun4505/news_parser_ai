@@ -6,6 +6,7 @@ from dotenv import load_dotenv
 import time
 import urllib.parse
 import feedparser
+from datetime import datetime, timedelta
 
 # Load environment variables
 load_dotenv()
@@ -60,11 +61,26 @@ def fetch_feedparser_articles(query, language, country, max_articles):
     if getattr(feed, 'bozo', False):
         print(f"Feedparser bozo_exception: {getattr(feed, 'bozo_exception', '')}")
     print(f"Feedparser entries found: {len(feed.entries)}")
+    now = datetime.utcnow()
+    today = now.date()
+    yesterday = today - timedelta(days=1)
     for entry in feed.entries[:max_articles]:
         # Prefer summary, but if not present, use title, never use link as description
         summary = getattr(entry, 'summary', '')
         if not summary or summary.strip() == getattr(entry, 'link', '').strip():
             summary = getattr(entry, 'title', '')
+        # Filter by date: only today and yesterday
+        pub_date = getattr(entry, 'published', None)
+        pub_date_obj = None
+        if pub_date:
+            try:
+                pub_date_obj = datetime(*entry.published_parsed[:6])
+            except Exception:
+                pub_date_obj = None
+        if pub_date_obj:
+            pub_date_only = pub_date_obj.date()
+            if pub_date_only != today and pub_date_only != yesterday:
+                continue
         article_data = {
             'title': getattr(entry, 'title', ''),
             'description': summary,
@@ -80,7 +96,7 @@ def fetch_feedparser_articles(query, language, country, max_articles):
 @app.route('/news/<query>')
 def get_news(query):
     try:
-        max_articles = request.args.get('articles', default=30, type=int)
+        max_articles = request.args.get('articles', default=300, type=int)
         max_articles = min(max(1, max_articles), 1000)
         language = request.args.get('language', default='en', type=str)
         country = request.args.get('country', default='IN', type=str)
