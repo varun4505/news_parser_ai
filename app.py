@@ -13,6 +13,7 @@ import traceback
 from functools import lru_cache  # Import LRU Cache for caching results
 import urllib.parse
 import requests
+import feedparser  # Add feedparser for RSS support
 
 # Load environment variables
 load_dotenv()
@@ -407,6 +408,25 @@ def get_news(query):
             
             articles.append(article_data)
         
+        # Try to fetch RSS feeds using feedparser for the same query
+        rss_url = f'https://news.google.com/rss/search?q={urllib.parse.quote(query)}&hl={language}&gl={country}&ceid={country}:{language}'
+        print(f"Fetching RSS feed: {rss_url}")
+        feed = feedparser.parse(rss_url)
+        if feed.entries:
+            for entry in feed.entries:
+                # Avoid duplicates by checking if the title already exists
+                if not any(a['title'] == entry.title for a in articles):
+                    article_data = {
+                        'title': entry.title,
+                        'description': entry.summary if hasattr(entry, 'summary') else '',
+                        'date': entry.published if hasattr(entry, 'published') else 'Unknown',
+                        'link': entry.link,
+                        'google_news_link': entry.link,
+                        'publication': entry.get('source', {}).get('title', 'Unknown Source') if hasattr(entry, 'source') else 'Unknown Source',
+                        'journalist': 'Not specified',
+                    }
+                    articles.append(article_data)
+
         if not articles:
             return jsonify({
                 "error": "No articles found",
