@@ -61,9 +61,13 @@ def fetch_feedparser_articles(query, language, country, max_articles):
         print(f"Feedparser bozo_exception: {getattr(feed, 'bozo_exception', '')}")
     print(f"Feedparser entries found: {len(feed.entries)}")
     for entry in feed.entries[:max_articles]:
+        # Prefer summary, but if not present, use title, never use link as description
+        summary = getattr(entry, 'summary', '')
+        if not summary or summary.strip() == getattr(entry, 'link', '').strip():
+            summary = getattr(entry, 'title', '')
         article_data = {
             'title': getattr(entry, 'title', ''),
-            'description': getattr(entry, 'summary', ''),
+            'description': summary,
             'date': getattr(entry, 'published', 'Unknown'),
             'link': getattr(entry, 'link', ''),
             'google_news_link': getattr(entry, 'link', ''),
