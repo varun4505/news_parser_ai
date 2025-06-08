@@ -8,5 +8,3 @@ flask-limiter==3.5.0
 lxml==5.4.0
 lxml_html_clean==0.4.2
 requests==2.26.0
-feedparser
-googlenewsdecoder
