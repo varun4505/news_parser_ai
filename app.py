@@ -81,7 +81,7 @@ def fetch_feedparser_articles(query, language, country, max_articles):
 def get_news(query):
     try:
         max_articles = request.args.get('articles', default=30, type=int)
-        max_articles = min(max(1, max_articles), 100)
+        max_articles = min(max(1, max_articles), 1000)
         language = request.args.get('language', default='en', type=str)
         country = request.args.get('country', default='IN', type=str)
         period = request.args.get('period', default='1d', type=str)
@@ -122,9 +122,10 @@ def get_news(query):
             }
             articles.append(article_data)
         # Feedparser results
-        feed_articles = fetch_feedparser_articles(query, language, country, max_articles)
+        feed_articles = fetch_feedparser_articles(query, language, country, max_articles*2)
         # Merge and deduplicate by link
         all_articles = {a['link']: a for a in articles + feed_articles}
+        # Return up to max_articles*2 unique articles
         result_list = list(all_articles.values())[:max_articles*2]
         print(f"Total unique articles returned: {len(result_list)}")
         if not result_list:
