@@ -314,8 +314,7 @@ def get_news(query):
                         article_data['full_text'] = article_details['text']
                         
                         # Use article text as description if current one is short or improve longer descriptions
-                        if len(description) < 100
-                         and article_details['text']:
+                        if len(description) < 100:
                             article_data['description'] = article_details['text'][:400] + "..."
                         elif len(description) < 250 and article_details['text']:
                             # Append a bit more content to make description richer
