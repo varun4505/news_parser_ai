@@ -314,7 +314,8 @@ def get_news(query):
                         article_data['full_text'] = article_details['text']
                         
                         # Use article text as description if current one is short or improve longer descriptions
-                        if len(description) < 100 and article_details['text']:
+                        if len(description) < 100
+                         and article_details['text']:
                             article_data['description'] = article_details['text'][:400] + "..."
                         elif len(description) < 250 and article_details['text']:
                             # Append a bit more content to make description richer
@@ -387,7 +388,7 @@ def index():
                 "path": "/news/<query>", 
                 "method": "GET", 
                 "description": "Get news articles based on search query",                "parameters": {
-                    "articles": "Optional: Number of articles to fetch (default: 30, max: 100)",
+                    "articles": "Optional: Number of articles to fetch (default: 300, max: 1000)",
                     "language": "Optional: Language code (default: 'en')",
                     "country": "Optional: Country code (default: 'IN')",
                     "period": "Optional: Time period for news (default: '1d')"
