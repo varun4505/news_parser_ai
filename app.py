@@ -53,13 +53,20 @@ def fetch_feedparser_articles(query, language, country, max_articles):
     rss_url = f'https://news.google.com/rss/search?q={urllib.parse.quote(query)}&hl={language}&gl={country}&ceid={country}:{language}'
     feed = feedparser.parse(rss_url)
     articles = []
+    # Debug: print feed status and entry count
+    print(f"Feedparser RSS URL: {rss_url}")
+    print(f"Feedparser status: {getattr(feed, 'status', 'N/A')}")
+    print(f"Feedparser bozo: {getattr(feed, 'bozo', 'N/A')}")
+    if getattr(feed, 'bozo', False):
+        print(f"Feedparser bozo_exception: {getattr(feed, 'bozo_exception', '')}")
+    print(f"Feedparser entries found: {len(feed.entries)}")
     for entry in feed.entries[:max_articles]:
         article_data = {
-            'title': entry.title,
+            'title': getattr(entry, 'title', ''),
             'description': getattr(entry, 'summary', ''),
             'date': getattr(entry, 'published', 'Unknown'),
-            'link': entry.link,
-            'google_news_link': entry.link,
+            'link': getattr(entry, 'link', ''),
+            'google_news_link': getattr(entry, 'link', ''),
             'publication': entry.get('source', {}).get('title', 'Unknown Source') if hasattr(entry, 'source') else 'Unknown Source',
             'journalist': 'Not specified'
         }
@@ -114,7 +121,8 @@ def get_news(query):
         feed_articles = fetch_feedparser_articles(query, language, country, max_articles)
         # Merge and deduplicate by link
         all_articles = {a['link']: a for a in articles + feed_articles}
-        result_list = list(all_articles.values())[:max_articles]
+        result_list = list(all_articles.values())[:max_articles*2]
+        print(f"Total unique articles returned: {len(result_list)}")
         if not result_list:
             return jsonify({
                 "error": "No articles found",
@@ -122,7 +130,10 @@ def get_news(query):
                 "articles": []
             })
         news_cache[cache_key] = (time.time(), result_list)
-        return jsonify(result_list)
+        return jsonify({
+            "count": len(result_list),
+            "articles": result_list
+        })
     except Exception as e:
         return jsonify({
             "error": "An error occurred while fetching news articles.",
