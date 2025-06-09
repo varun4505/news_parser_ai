@@ -173,7 +173,7 @@ def fetch_article_details(url):
             
         # Build result dict with extracted data
         result = {
-            'text': article.text[:100] if article.text else '',  # Limit text length
+            'text': article.text[:1000] if article.text else '',  # Limit text length
             'top_image': article.top_image,
             'authors': article.authors,
             'publish_date': article.publish_date,
@@ -195,10 +195,10 @@ def fetch_article_details(url):
 
 @app.route('/news/<query>')
 def get_news(query):
-    try:        # Get number of articles from query parameters (default to 300)
-        max_articles = request.args.get('articles', default=50, type=int)
+    try:        # Get number of articles from query parameters (default to 30)
+        max_articles = request.args.get('articles', default=30, type=int)
         # Limit to reasonable range
-        max_articles = min(max(1, max_articles), 200)  # Between 1 and 1000 articles
+        max_articles = min(max(1, max_articles), 100)  # Between 1 and 100 articles
         
         # Get if detailed mode is enabled (uses newspaper3k to fetch full article content)
         detailed_mode = request.args.get('detailed', default=True, type=lambda v: v.lower() == 'true')
@@ -314,7 +314,7 @@ def get_news(query):
                         article_data['full_text'] = article_details['text']
                         
                         # Use article text as description if current one is short or improve longer descriptions
-                        if len(description) < 100:
+                        if len(description) < 100 and article_details['text']:
                             article_data['description'] = article_details['text'][:400] + "..."
                         elif len(description) < 250 and article_details['text']:
                             # Append a bit more content to make description richer
@@ -387,7 +387,7 @@ def index():
                 "path": "/news/<query>", 
                 "method": "GET", 
                 "description": "Get news articles based on search query",                "parameters": {
-                    "articles": "Optional: Number of articles to fetch (default: 60, max: 150)",
+                    "articles": "Optional: Number of articles to fetch (default: 30, max: 100)",
                     "language": "Optional: Language code (default: 'en')",
                     "country": "Optional: Country code (default: 'IN')",
                     "period": "Optional: Time period for news (default: '1d')"
