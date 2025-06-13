@@ -11,7 +11,7 @@ from datetime import datetime
 import time
 import traceback
 from functools import lru_cache  # Import LRU Cache for caching results
-from googlenewsdecoder import GoogleNewsDecoder
+from googlenewsdecoder.decoderv1 import decode_google_news_url
 
 # Load environment variables
 load_dotenv()
@@ -550,8 +550,7 @@ def decode_url():
     if not url:
         return jsonify({'error': 'No URL provided'}), 400
     try:
-        decoder = GoogleNewsDecoder()
-        decoded_url = decoder.decode(url)
+        decoded_url = decode_google_news_url(url)
         return jsonify({'decoded_url': decoded_url})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
