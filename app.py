@@ -11,6 +11,7 @@ from datetime import datetime
 import time
 import traceback
 from functools import lru_cache  # Import LRU Cache for caching results
+from googlenewsdecoder import GoogleNewsDecoder
 
 # Load environment variables
 load_dotenv()
@@ -541,6 +542,19 @@ def not_found(e):
         "message": "The requested URL was not found on this server. Make sure you're using a valid endpoint.",
         "available_endpoints": ["/", "/news/<query>", "/options", "/health"]
     }), 404
+
+@app.route('/decode_url', methods=['POST'])
+def decode_url():
+    data = request.get_json()
+    url = data.get('url')
+    if not url:
+        return jsonify({'error': 'No URL provided'}), 400
+    try:
+        decoder = GoogleNewsDecoder()
+        decoded_url = decoder.decode(url)
+        return jsonify({'decoded_url': decoded_url})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 if __name__ == '__main__':
     print("News Scraper API running...")
